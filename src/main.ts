@@ -23,6 +23,8 @@ const partialJSONParser = (chunk: string|Buffer, leftOver: string, iter: number)
             try{
                 partiallCollected.push(JSON.parse(entities[i].slice(0, entities[i].length - 1)));
             }catch (e) {
+                console.log(e);
+                console.log(`Error in chunk # ${iter}.`)
                 console.log(entities[i].slice(0, entities[i].length - 1));
             }
         } else {
@@ -35,6 +37,52 @@ const partialJSONParser = (chunk: string|Buffer, leftOver: string, iter: number)
     }
 }
 
+const onMainReadStreamEnd = (writeStream: fs.WriteStream, startTimestamp: number) => {
+    const interval = setInterval(() => {
+        process.stdout.write(
+            `\rRunning write processes: ${allWrites} / Time taken: ${(Date.now() - startTimestamp) / 1000 } seconds`
+        );
+        // console.timeLog('executionTime');
+        if (allWrites === 0) {
+            writeStream.write(']', () => {
+                writeStream.end();
+                process.stdout.write('\nFinished!\n');
+                console.timeLog('executionTime');
+                const used = process.memoryUsage().heapUsed / 1024 / 1024;
+                console.log(`The script uses approximately ${used} MB`);
+            });
+            clearInterval(interval);
+        }
+    }, 100);
+}
+
+const checkCommonPlatforms = (assetPlatforms: Platform[], vulnerabilityPlatforms: Platform[]): Platform[] => {
+    const commonPlatforms: Platform[] = [];
+    for(let k=0; k < assetPlatforms.length; k++){
+        for(let l=0; l < vulnerabilityPlatforms.length; l++){
+            if(assetPlatforms[k].id === vulnerabilityPlatforms[l].id){
+                const minVersion = assetPlatforms[k].minVersion;
+                const maxVersion = assetPlatforms[k].maxVersion;
+                const vulnMinVersion = vulnerabilityPlatforms[l].minVersion;
+                const vulnMaxVersion = vulnerabilityPlatforms[l].maxVersion;
+                if(minVersion && maxVersion && vulnMinVersion && vulnMaxVersion){
+                    const isSemantic = isSemanticVersion(minVersion) && isSemanticVersion(maxVersion) && isSemanticVersion(vulnMinVersion) && isSemanticVersion(vulnMaxVersion);
+                    if(!isSemantic){
+                        if(compareNonSemanticVersions(minVersion, vulnMinVersion) === 1 && compareNonSemanticVersions(maxVersion, vulnMaxVersion) === -1){
+                            commonPlatforms.push(assetPlatforms[k]);
+                        }
+                    }else{
+                        if(compareSemanticVersions(minVersion, vulnMinVersion) === 1 && compareSemanticVersions(maxVersion, vulnMaxVersion) === -1){
+                            commonPlatforms.push(assetPlatforms[k]);
+                        }
+                    }
+                }
+            }
+        }
+    }
+    return commonPlatforms;
+}
+
 const vulnerabilityAssetPair = (vulnerability: Vulnerability, asset: Asset): Pair|boolean => {
 
     if(
@@ -44,30 +92,7 @@ const vulnerabilityAssetPair = (vulnerability: Vulnerability, asset: Asset): Pai
         !vulnerability?.platforms?.length
     ) return false;
 
-    const commonPlatforms: Platform[] = [];
-
-    for(let k=0; k < asset.platforms.length; k++){
-        for(let l=0; l < vulnerability.platforms.length; l++){
-            if(asset.platforms[k].id === vulnerability.platforms[l].id){
-                const minVersion = asset.platforms[k].minVersion;
-                const maxVersion = asset.platforms[k].maxVersion;
-                const vulnMinVersion = vulnerability.platforms[l].minVersion;
-                const vulnMaxVersion = vulnerability.platforms[l].maxVersion;
-                if(minVersion && maxVersion && vulnMinVersion && vulnMaxVersion){
-                    const isSemantic = isSemanticVersion(minVersion) && isSemanticVersion(maxVersion) && isSemanticVersion(vulnMinVersion) && isSemanticVersion(vulnMaxVersion);
-                    if(!isSemantic){
-                        if(compareNonSemanticVersions(minVersion, vulnMinVersion) === 1 && compareNonSemanticVersions(maxVersion, vulnMaxVersion) === -1){
-                            commonPlatforms.push(asset.platforms[k]);
-                        }
-                    }else{
-                        if(compareSemanticVersions(minVersion, vulnMinVersion) === 1 && compareSemanticVersions(maxVersion, vulnMaxVersion) === -1){
-                            commonPlatforms.push(asset.platforms[k]);
-                        }
-                    }
-                }
-            }
-        }
-    }
+    const commonPlatforms = checkCommonPlatforms(asset.platforms, vulnerability.platforms);
 
     if(commonPlatforms.length === 0){
         return false;
@@ -80,6 +105,22 @@ const vulnerabilityAssetPair = (vulnerability: Vulnerability, asset: Asset): Pai
     };
 }
 
+const checkVulnerabilitiesAssetsPairs = (assetsChunk: Asset[], vulnerabilities: Vulnerability[]) => {
+    let toWrite: string[] = [];
+    for(let i=0; i < assetsChunk.length; i++){
+        for(let j=0; j < vulnerabilities.length; j++) {
+            const vulnerability: Vulnerability = vulnerabilities[j];
+            const asset: Asset = assetsChunk[i];
+            const AssetVulnerabilityPair: Pair|boolean = vulnerabilityAssetPair(vulnerability, asset);
+
+            if(!AssetVulnerabilityPair) continue;
+
+            toWrite.push(JSON.stringify(AssetVulnerabilityPair));
+        }
+    }
+    return toWrite;
+}
+
 const runThroughVulnerabilities = (writeStream: fs.WriteStream, assetsReadStream: fs.ReadStream, assetsChunk: Asset[]) => {
 
     const vulnerabilitiesReadStream = fs.createReadStream(VULNERABILITIES_FILE);
@@ -88,49 +129,28 @@ const runThroughVulnerabilities = (writeStream: fs.WriteStream, assetsReadStream
     let leftOver = '';
 
     vulnerabilitiesReadStream.on('data', (chunk) => {
-
         const {
             partiallCollected: partiallCollectedVulnerabilities,
             leftOver: newLeftOver
         } = partialJSONParser(chunk, leftOver, iter);
-
         leftOver = newLeftOver;
-
         iter++;
-
-        let toWrite: string[] = [];
-
-        for(let i=0; i < assetsChunk.length; i++){
-            for(let j=0; j < partiallCollectedVulnerabilities.length; j++) {
-                const vulnerability: Vulnerability = partiallCollectedVulnerabilities[j];
-                const asset: Asset = assetsChunk[i];
-                const AssetVulnerabilityPair: Pair|boolean = vulnerabilityAssetPair(vulnerability, asset);
-
-                if(!AssetVulnerabilityPair) continue;
-
-                toWrite.push(JSON.stringify(AssetVulnerabilityPair));
-            }
-        }
-
+        const toWrite = checkVulnerabilitiesAssetsPairs(assetsChunk, partiallCollectedVulnerabilities);
         allWrites++;
-
         writeStream.write(
             toWrite.join(',\n') + `${(iter === 1 && leftOver === '') ? '' : ',\n'}`,
             (err) => {
                 allWrites--;
                 if(err) throw err;
             });
-
-    });
-
-    vulnerabilitiesReadStream.on('end', () => {
-        vulnerabilitiesReadStream.close();
-        console.timeLog('executionTime');
     });
 }
 
 export const generateOutput = async () => {
+
     console.time('executionTime');
+
+    const startTimestamp = Date.now();
 
     if(fs.existsSync(OUTPUT_FILE)) await fs.unlinkSync(OUTPUT_FILE);
 
@@ -157,24 +177,7 @@ export const generateOutput = async () => {
 
     assetsReadStream.on('end', () => {
 
-        console.log('end');
-
-        const used = process.memoryUsage().heapUsed / 1024 / 1024;
-        console.log(`The script uses approximately ${used} MB`);
-
-        console.timeLog('executionTime');
-
-        const interval = setInterval(() => {
-            console.log('allWrites', allWrites);
-            if (allWrites === 0) {
-                writeStream.write(']', () => {
-                    writeStream.end();
-                    console.timeLog('executionTime');
-                });
-                clearInterval(interval);
-            }
-        }, 10);
-
+        onMainReadStreamEnd(writeStream, startTimestamp);
 
     });
 
