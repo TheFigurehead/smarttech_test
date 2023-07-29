@@ -1,0 +1,178 @@
+[
+  {
+    "id": 1,
+    "name": "Windows"
+  },
+  {
+    "id": 2,
+    "name": "Linux"
+  },
+  {
+    "id": 3,
+    "name": "MacOS"
+  },
+  {
+    "id": 4,
+    "name": "Android"
+  },
+  {
+    "id": 5,
+    "name": "iOS"
+  },
+  {
+    "id": 6,
+    "name": "Solaris"
+  },
+  {
+    "id": 7,
+    "name": "FreeBSD"
+  },
+  {
+    "id": 8,
+    "name": "OpenBSD"
+  },
+  {
+    "id": 9,
+    "name": "NetBSD"
+  },
+  {
+    "id": 10,
+    "name": "ChromeOS"
+  },
+  {
+    "id": 11,
+    "name": "Blackberry"
+  },
+  {
+    "id": 12,
+    "name": "FirefoxOS"
+  },
+  {
+    "id": 13,
+    "name": "WindowsPhone"
+  },
+  {
+    "id": 14,
+    "name": "Symbian"
+  },
+  {
+    "id": 15,
+    "name": "Tizen"
+  },
+  {
+    "id": 16,
+    "name": "WebOS"
+  },
+  {
+    "id": 17,
+    "name": "Bada"
+  },
+  {
+    "id": 18,
+    "name": "MeeGo"
+  },
+  {
+    "id": 19,
+    "name": "Maemo"
+  },
+  {
+    "id": 20,
+    "name": "PalmOS"
+  },
+  {
+    "id": 21,
+    "name": "Brew"
+  },
+  {
+    "id": 22,
+    "name": "DangerOS"
+  },
+  {
+    "id": 23,
+    "name": "SailfishOS"
+  },
+  {
+    "id": 24,
+    "name": "UbuntuTouch"
+  },
+  {
+    "id": 25,
+    "name": "WindowsMobile"
+  },
+  {
+    "id": 26,
+    "name": "WindowsCE"
+  },
+  {
+    "id": 27,
+    "name": "WindowsRT"
+  },
+  {
+    "id": 28,
+    "name": "Windows10Mobile"
+  },
+  {
+    "id": 29,
+    "name": "Windows10IoT"
+  },
+  {
+    "id": 30,
+    "name": "Windows10X"
+  },
+  {
+    "id": 31,
+    "name": "Windows10"
+  },
+  {
+    "id": 32,
+    "name": "Windows8"
+  },
+  {
+    "id": 33,
+    "name": "Windows7"
+  },
+  {
+    "id": 34,
+    "name": "WindowsVista"
+  },
+  {
+    "id": 35,
+    "name": "WindowsXP"
+  },
+  {
+    "id": 36,
+    "name": "Windows2000"
+  },
+  {
+    "id": 37,
+    "name": "WindowsNT"
+  },
+  {
+    "id": 38,
+    "name": "WindowsME"
+  },
+  {
+    "id": 39,
+    "name": "Windows98"
+  },
+  {
+    "id": 40,
+    "name": "Windows95"
+  },
+  {
+    "id": 41,
+    "name": "Windows3.1"
+  },
+  {
+    "id": 42,
+    "name": "Windows3.0"
+  },
+  {
+    "id": 43,
+    "name": "Windows2.0"
+  },
+  {
+    "id": 44,
+    "name": "Windows1.0"
+  }
+]
