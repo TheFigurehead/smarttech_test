@@ -1,4 +1,5 @@
-import { generateOutput } from './src/main';
+import { MainProcess } from './src/MainProcess';
 (async () => {
-    await generateOutput();
+    const process = new MainProcess();
+    await process.init();
 })();
