@@ -16,6 +16,8 @@ export class SecondaryProcess {
     public onWriteStart: () => void;
     public onWriteEnd: () => void;
 
+    private writeIteration: number = 0;
+
     constructor(writeStream: fs.WriteStream, mainChunks: Asset[], onWriteStart: () => void, onWriteEnd: () => void) {
         this.outputWriteStream = writeStream;
         this.onWriteStart = onWriteStart;
@@ -34,7 +36,7 @@ export class SecondaryProcess {
         this.readStream.on('data', this.onReadStreamData.bind(this));
     }
 
-    onReadStreamData(chunk: Buffer|string) {
+    onReadStreamData(chunk: Buffer) {
 
         const partiallyCollected = this.partialJSONParser.decode(chunk);
 
@@ -43,11 +45,13 @@ export class SecondaryProcess {
             partiallyCollected
         );
 
+        this.writeIteration++;
+
         this.onWriteStart();
 
         this.outputWriteStream.write(
-            toWrite.join(',\n')
-            + `${(this.partialJSONParser.iter === 1 && this.partialJSONParser.leftOver === '') ? '' : ',\n'}`,
+            `${this.writeIteration !== 1 ? ',' : ''}`+
+            toWrite.join(',\n'),
             (err) => {
                 this.onWriteEnd();
                 if(err) throw err;

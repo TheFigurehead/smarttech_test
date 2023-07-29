@@ -2,5 +2,5 @@ import { generateRandomVulnerabilityJSON, generateRandomAssetsJSON } from './src
 
 console.time('executionTime');
 
-generateRandomVulnerabilityJSON('data/vulnerabilities.json', 10);
-generateRandomAssetsJSON('data/assets.json', 10);
+generateRandomVulnerabilityJSON('data/vulnerabilities.json', 10000);
+generateRandomAssetsJSON('data/assets.json', 10000);

@@ -1,35 +1,28 @@
 export class PartialJSONDecoder {
-    public leftOver: string = '';
+    private buffer: Buffer|string = '';
     public iter: number = 0;
 
-    public decode(chunk: Buffer|string) {
+    public decode(chunk: Buffer) {
 
-        let chunkStr = chunk.toString();
-        const partiallyCollected: any[] = [];
+        let toDelete = 0;
+        this.buffer = [this.buffer, chunk.toString()].join('');
 
-        if(this.iter === 0){
-            chunkStr = chunkStr.slice(1, chunkStr.length);
-        }else{
-            chunkStr = this.leftOver + chunkStr;
+        const jsonObjects = this.buffer.split(/(\{.+\})/g);
+
+        if (jsonObjects.length === 0) {
+            return [];
         }
-
-        const entities = chunkStr.split('\n');
-
-        for(let i=0; i < entities.length; i++){
-            if( i !== entities.length - 1) {
-                try{
-                    partiallyCollected.push(JSON.parse(entities[i].slice(0, entities[i].length - 1)));
-                }catch (e) {
-                    console.log(e);
-                    console.log(`Error in chunk # ${this.iter}.`)
-                    console.log(entities[i].slice(0, entities[i].length - 1));
-                }
-            } else {
-                this.leftOver = entities[i];
+        const partiallyCollected: any[] = [];
+        for (let i = 0; i < jsonObjects.length; i++) {
+            if(i !== jsonObjects.length - 1) toDelete += jsonObjects[i].length;
+            try {
+                partiallyCollected.push(JSON.parse(jsonObjects[i]));
+            } catch (e) {
+                continue;
             }
         }
-
         this.iter++;
+        this.buffer = this.buffer.slice(toDelete);
 
         return partiallyCollected;
 

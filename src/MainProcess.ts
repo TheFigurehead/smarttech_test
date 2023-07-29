@@ -45,7 +45,7 @@ export class MainProcess {
         this.mainReadStream.on('data', this.onAssetsReadStreamData.bind(this));
     }
 
-    private onAssetsReadStreamData(chunk: Buffer|string) {
+    private onAssetsReadStreamData(chunk: Buffer) {
         const partiallyCollectedAssets = this.partialJSONParser.decode(chunk);
         new SecondaryProcess(
             this.outputWriteStream,

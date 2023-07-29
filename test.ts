@@ -9,6 +9,10 @@ import {
     generateNonSemanticVersion
 } from './src/utils';
 
+import { MainProcess } from './src/MainProcess';
+import { SecondaryProcess } from './src/SecondaryProcess';
+import { PartialJSONDecoder } from './src/PartialJSONDecoder';
+
 // semantic versions test
 
 test('Is semantic version', () => {
@@ -46,5 +50,3 @@ test('Generate random non semantic version', () => {
     const version = generateNonSemanticVersion('0.0.1-2020-10-10');
     assert.equal(isSemanticVersion(version), false);
 });
-
-
