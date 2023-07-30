@@ -1,4 +1,4 @@
-import test from 'node:test';
+import test, {describe, it} from 'node:test';
 import assert from 'node:assert/strict';
 
 import {
@@ -9,8 +9,8 @@ import {
     generateNonSemanticVersion
 } from './src/utils';
 
-import { MainProcess } from './src/MainProcess';
-import { SecondaryProcess } from './src/SecondaryProcess';
+// import { MainProcess } from './src/MainProcess';
+// import { SecondaryProcess } from './src/SecondaryProcess';
 import { PartialJSONDecoder } from './src/PartialJSONDecoder';
 
 // semantic versions test
@@ -49,4 +49,48 @@ test('Generate random semantic version', () => {
 test('Generate random non semantic version', () => {
     const version = generateNonSemanticVersion('0.0.1-2020-10-10');
     assert.equal(isSemanticVersion(version), false);
+});
+
+// partial json decoding
+
+describe('Partial Json Decoder', () => {
+
+    it('should get all valid objects', async () => {
+        const decoder = new PartialJSONDecoder();
+        const chunk = '{"name": "John Doe"}, {"name": "Jane ';
+        const jsonObjects = decoder.decode(new Buffer(chunk));
+        assert.deepEqual(jsonObjects, [{ name: 'John Doe' }]);
+    });
+
+    it('should get empty object on empty buffer', async () => {
+        const decoder = new PartialJSONDecoder();
+        const chunk = '';
+        const jsonObjects = decoder.decode(new Buffer(chunk));
+        assert.deepEqual(jsonObjects, []);
+    });
+
+    it('should not handle incomplete JSON objects', async () => {
+        const decoder = new PartialJSONDecoder();
+        const chunk = '{"name": "John Doe"';
+        const jsonObjects = decoder.decode(new Buffer(chunk));
+        assert.deepEqual(jsonObjects, []);
+    });
+
+    it('should handle multiple JSON objects', async () => {
+        const decoder = new PartialJSONDecoder();
+        const chunksWithResults = [
+            {
+                buffer: '[{"name": "John Doe"},{"name": "John',
+                expected: [{ name: 'John Doe' }]
+            },
+            {
+                buffer: ' Carmack"},{"name": "Jane Doe"}]',
+                expected: [{ name: 'John Carmack' }, { name: 'Jane Doe' }]
+            }
+        ];
+        chunksWithResults.forEach(({ buffer, expected }) => {
+            const jsonObjects = decoder.decode(new Buffer(buffer));
+            assert.deepEqual(jsonObjects, expected);
+        });
+    });
 });

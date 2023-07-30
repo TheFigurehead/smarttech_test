@@ -5,7 +5,7 @@ export class PartialJSONDecoder {
     public decode(chunk: Buffer) {
 
         let toDelete = 0;
-        this.buffer = [this.buffer, chunk.toString()].join('');
+        this.buffer = [this.buffer, chunk.toString()].join('').replace(/^,/, '');
 
         const jsonObjects = this.buffer.split(/(\{.+\})/g);
 
@@ -16,7 +16,7 @@ export class PartialJSONDecoder {
         for (let i = 0; i < jsonObjects.length; i++) {
             if(i !== jsonObjects.length - 1) toDelete += jsonObjects[i].length;
             try {
-                partiallyCollected.push(JSON.parse(jsonObjects[i]));
+                partiallyCollected.push(...JSON.parse(`[${jsonObjects[i]}]`));
             } catch (e) {
                 continue;
             }
