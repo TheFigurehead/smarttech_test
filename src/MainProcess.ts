@@ -13,6 +13,8 @@ export class MainProcess {
     public mainReadStream: fs.ReadStream;
     public outputWriteStream: fs.WriteStream;
 
+    public checksDone: number = 0;
+
     public partialJSONParser: PartialJSONDecoder = new PartialJSONDecoder();
 
     constructor() {
@@ -51,7 +53,8 @@ export class MainProcess {
             this.outputWriteStream,
             partiallyCollectedAssets,
             () => this.changeActiveWritesAmount(1),
-            () => this.changeActiveWritesAmount(-1)
+            () => this.changeActiveWritesAmount(-1),
+            () => this.checksDone++
         );
     }
 
@@ -71,6 +74,8 @@ export class MainProcess {
             console.timeLog('executionTime');
             const used = process.memoryUsage().heapUsed / 1024 / 1024;
             console.log(`The script uses approximately ${used} MB`);
+
+            console.log(`Checks done: ${this.checksDone}`);
         });
     }
 

@@ -15,13 +15,15 @@ export class SecondaryProcess {
 
     public onWriteStart: () => void;
     public onWriteEnd: () => void;
+    public onCheckDone: () => void;
 
     private writeIteration: number = 0;
 
-    constructor(writeStream: fs.WriteStream, mainChunks: Asset[], onWriteStart: () => void, onWriteEnd: () => void) {
+    constructor(writeStream: fs.WriteStream, mainChunks: Asset[], onWriteStart: () => void, onWriteEnd: () => void, onCheckDone: () => void) {
         this.outputWriteStream = writeStream;
         this.onWriteStart = onWriteStart;
         this.onWriteEnd = onWriteEnd;
+        this.onCheckDone = onCheckDone;
         this.mainChunks = mainChunks;
 
         this.initReadStream();
@@ -62,6 +64,9 @@ export class SecondaryProcess {
         let toWrite: string[] = [];
         for(let i=0; i < assetsChunk.length; i++){
             for(let j=0; j < vulnerabilities.length; j++) {
+
+                this.onCheckDone();
+
                 const vulnerability: Vulnerability = vulnerabilities[j];
                 const asset: Asset = assetsChunk[i];
                 const AssetVulnerabilityPair: Pair|boolean = this.makePair(vulnerability, asset);
